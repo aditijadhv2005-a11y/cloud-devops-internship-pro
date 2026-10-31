@@ -1,0 +1,16 @@
+apiVersion: platform.example.com/v1alpha1
+kind: ManagedApp
+metadata:
+  name: hello-platform
+  namespace: default
+spec:
+  image: nginx:1.27
+  replicas: 2
+  port: 80
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 128Mi

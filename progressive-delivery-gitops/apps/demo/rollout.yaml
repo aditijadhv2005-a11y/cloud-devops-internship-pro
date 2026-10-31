@@ -1,0 +1,82 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: demo
+  labels:
+    app.kubernetes.io/name: demo
+spec:
+  replicas: 4
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: app
+          image: ghcr.io/REPLACE-ME/progressive-delivery-app:REPLACE-WITH-IMMUTABLE-TAG
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: APP_VERSION
+              value: "gitops-demo"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 300m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+  strategy:
+    canary:
+      stableService: demo-stable
+      canaryService: demo-canary
+      trafficRouting:
+        istio:
+          virtualService:
+            name: demo
+            routes:
+              - primary
+      steps:
+        - setWeight: 10
+        - pause: {duration: 2m}
+        - analysis:
+            templates:
+              - templateName: demo-success-rate
+        - setWeight: 25
+        - pause: {duration: 2m}
+        - analysis:
+            templates:
+              - templateName: demo-success-rate
+        - setWeight: 50
+        - pause: {duration: 3m}
+        - analysis:
+            templates:
+              - templateName: demo-success-rate
+        - setWeight: 100

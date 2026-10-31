@@ -1,0 +1,17 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: app-lifecycle-operator
+rules:
+- apiGroups: ["platform.example.com"]
+  resources: ["managedapps"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["platform.example.com"]
+  resources: ["managedapps/status", "managedapps/finalizers"]
+  verbs: ["get", "update", "patch"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["services", "events"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]

@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: demo-success-rate
+spec:
+  metrics:
+    - name: success-rate
+      interval: 1m
+      count: 3
+      successCondition: result[0] >= 0.99
+      failureLimit: 1
+      provider:
+        prometheus:
+          # Update this address to the Prometheus service in your cluster.
+          address: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+          query: |
+            sum(rate(http_requests_total{app="demo",status!~"5.."}[5m]))
+            /
+            clamp_min(sum(rate(http_requests_total{app="demo"}[5m])), 0.001)
+    - name: p95-latency
+      interval: 1m
+      count: 3
+      successCondition: result[0] < 0.5
+      failureLimit: 1
+      provider:
+        prometheus:
+          address: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+          query: |
+            histogram_quantile(0.95,
+              sum by (le) (rate(http_request_duration_seconds_bucket{app="demo"}[5m]))
+            )

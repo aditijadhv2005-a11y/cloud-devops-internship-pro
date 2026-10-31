@@ -1,0 +1,60 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: managedapps.platform.example.com
+spec:
+  group: platform.example.com
+  scope: Namespaced
+  names:
+    plural: managedapps
+    singular: managedapp
+    kind: ManagedApp
+    shortNames: [mapp]
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Image
+          type: string
+          jsonPath: .spec.image
+        - name: Ready
+          type: integer
+          jsonPath: .status.readyReplicas
+      schema:
+        openAPIV3Schema:
+          type: object
+          required: [spec]
+          properties:
+            spec:
+              type: object
+              required: [image]
+              properties:
+                image:
+                  type: string
+                  minLength: 1
+                replicas:
+                  type: integer
+                  minimum: 1
+                  maximum: 20
+                  default: 2
+                port:
+                  type: integer
+                  minimum: 1
+                  maximum: 65535
+                  default: 8080
+                resources:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              properties:
+                observedGeneration: {type: integer, format: int64}
+                readyReplicas: {type: integer, format: int32}
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true

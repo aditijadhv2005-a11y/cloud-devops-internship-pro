@@ -1,0 +1,22 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: demo
+spec:
+  hosts:
+    - demo.example.com
+  gateways:
+    - demo-gateway
+  http:
+    - name: primary
+      route:
+        - destination:
+            host: demo-stable
+            port:
+              number: 80
+          weight: 100
+        - destination:
+            host: demo-canary
+            port:
+              number: 80
+          weight: 0
